@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 
 set :application, "trigger-chef-solo"
-# set :repository,  "set your repository location here"
 
 # ================================
 # Functions
@@ -42,9 +41,8 @@ role :openstack_network, "localhost"
 # prototype: must be initialized before run task (with `nova list` commands)
 role :web, "xxx.xxx.xxx.xxx"
 role :app, "xxx.xxx.xxx.xxx"
-role :db,  "xxx.xxx.xxx.xxx", :primary => true
+role :db,  "xxx.xxx.xxx.xxx" #, :primary => true
 role :db,  "xxx.xxx.xxx.xxx"
-
 
 # ================================
 # Define system (as systemconfig.sh)
@@ -67,7 +65,7 @@ nodes = [
   node_db = {
     type: "node",
     subnet: @subnet_private,
-    ipv4: nil
+    ipv4: nil,
     role: :db
   }
 ]
@@ -82,13 +80,40 @@ set :system_config, @small_system
 # ================================
 # Define tasks
 # ================================
-namespace :chef do
-  # desc "prototype: configure firewall rules on vpn-gw"
-  # task :conf_vpn_gw, :roles => :vpn_gw do
-  #   run "chef-solo solo.rb -j #{chef_repo}/cookbooks/recipe/"
-  # end
 
-  task :conf_web_server, :roles => :web do
+namespace :mytest do
+  task :hello do
+    puts "hey"
+  end
+
+  task :os, :role => :openstack_compute do
+    puts "os_compute"
+    run "uptime"
+  end
+end
+
+namespace :chef do
+
+  task :default do
+    init_config
+    sync
+
+  desc "prototype: configure firewall rules on vpn-gw"
+  task :conf_vpn_gw, :roles => :vpn_gw do
+    run "chef-solo solo.rb -j #{chef_repo}/cookbooks/recipe/"
+  end
+
+  desc "install chef-solo"
+  task :prepare do
+    run "knife-solo prepare #{node}"
+  end
+
+
+  desc "trigger for `web'"
+  task :conf_web, :roles => :web do
+    run "chef-solo #{config_dir}/solo.rb -j #{chef_repo}/cookbooks/recipe"
+    # and more...
+  end
 
   # ----------------
 
@@ -101,3 +126,4 @@ namespace :chef do
   task :nginx, :roles => :web do
     run "yum install -y nginx"
   end
+end

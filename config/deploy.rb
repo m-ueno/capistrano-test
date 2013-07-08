@@ -1,5 +1,9 @@
 # -*- coding:utf-8 -*-
 
+# goal: create vsys using chef-solo
+# goal: manage 2VMs in parallel
+# ================================
+
 set :application, "trigger-chef-solo"
 
 # ================================

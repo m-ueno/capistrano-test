@@ -3,8 +3,14 @@
 # goal: create vsys using chef-solo
 # goal: manage 2VMs in parallel
 # ================================
+# <= openstack floatingip
+#   <= routing
+# <= chef-install
+#   <= proxy
 
 set :application, "trigger-chef-solo"
+set :topdir, File.dirname(__FILE__)
+set :chef_dir, "#{topdir}/chef-repo"
 
 # ================================
 # Functions
@@ -43,7 +49,7 @@ role :openstack_compute, "localhost"
 role :openstack_network, "localhost"
 
 # prototype: must be initialized before run task (with `nova list` commands)
-role :web, "xxx.xxx.xxx.xxx"
+role :web, "xxx.xxx.xxx.xxx" # floatingip
 role :app, "xxx.xxx.xxx.xxx"
 role :db,  "xxx.xxx.xxx.xxx" #, :primary => true
 role :db,  "xxx.xxx.xxx.xxx"
@@ -52,13 +58,13 @@ role :db,  "xxx.xxx.xxx.xxx"
 # Define system (as systemconfig.sh)
 # ================================
 @subnet_private = "192.168.60.0/24"
-@subnet_public = "192.168.0.16/28"
+@subnet_public = "172.16.10.0/24"
 nodes = [
   node_web = {
     type: "node",
     subnet: @subnet_public,
     ipv4: nil,
-    role: :web  # symbol
+    role: :web
   },
   node_app = {
     type: "node",
@@ -96,11 +102,21 @@ namespace :mytest do
   end
 end
 
+namespace :run do
+  desc "create VSYS"
+  task :default do
+    chef.init_config
+    chef.prepare
+    # ...
+  end
+end
+
 namespace :chef do
 
   task :default do
     init_config
     sync
+  end
 
   desc "prototype: configure firewall rules on vpn-gw"
   task :conf_vpn_gw, :roles => :vpn_gw do

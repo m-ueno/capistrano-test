@@ -102,14 +102,6 @@ namespace :mytest do
   end
 end
 
-namespace :run do
-  desc "create VSYS"
-  task :default do
-    chef.init_config
-    chef.prepare
-    # ...
-  end
-end
 
 namespace :chef do
 
